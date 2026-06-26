@@ -2,11 +2,11 @@ import pytest
 import asyncio
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from agent_os.core.config import AgentOSSettings, load_settings, DEFAULT_AGENTOS_DIR
-from agent_os.core.models import Event, AgentConfig, MemoryRecord
-from agent_os.core.events import EventBus
-from agent_os.core.permissions import Capability, check_permission
-from agent_os.core.workspace import Workspace
+from agent_fabric.core.config import AgentFabricSettings, load_settings, DEFAULT_AGENTFABRIC_DIR
+from agent_fabric.core.models import Event, AgentConfig, MemoryRecord
+from agent_fabric.core.events import EventBus
+from agent_fabric.core.permissions import Capability, check_permission
+from agent_fabric.core.workspace import Workspace
 
 
 def test_settings_load(monkeypatch):
@@ -18,8 +18,8 @@ def test_settings_load(monkeypatch):
     assert settings.providers.openai_model == "gpt-4o-mini"
     
     # Test env overrides
-    monkeypatch.setenv("AGENTOS_WORKSPACE", "custom-workspace")
-    monkeypatch.setenv("AGENTOS_DEFAULT_PROVIDER", "google")
+    monkeypatch.setenv("AGENTFABRIC_WORKSPACE", "custom-workspace")
+    monkeypatch.setenv("AGENTFABRIC_DEFAULT_PROVIDER", "google")
     monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
     
     overridden = load_settings()
@@ -104,9 +104,9 @@ def test_workspaces():
     """Test switching workspaces and directory generation."""
     with TemporaryDirectory() as temp_dir:
         # Override settings for tests
-        import agent_os.core.workspace as ws
-        old_dir = ws.settings.agentos_dir
-        ws.settings.agentos_dir = Path(temp_dir)
+        import agent_fabric.core.workspace as ws
+        old_dir = ws.settings.agentfabric_dir
+        ws.settings.agentfabric_dir = Path(temp_dir)
         
         try:
             # Create a workspace
@@ -129,4 +129,4 @@ def test_workspaces():
             assert Workspace.current().name == "default"
             
         finally:
-            ws.settings.agentos_dir = old_dir
+            ws.settings.agentfabric_dir = old_dir

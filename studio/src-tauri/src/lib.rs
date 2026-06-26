@@ -21,12 +21,12 @@ pub fn run() {
             ).is_ok();
 
             if !is_running {
-                println!("AgentOS FastAPI Server is not running. Starting it...");
+                println!("AgentFabric FastAPI Server is not running. Starting it...");
                 let mut cmd = std::process::Command::new("uv");
                 cmd.args(&[
                     "run",
                     "uvicorn",
-                    "agent_os.server.app:create_app",
+                    "agent_fabric.server.app:create_app",
                     "--factory",
                     "--host",
                     "127.0.0.1",
@@ -54,7 +54,7 @@ pub fn run() {
                         cmd2.args(&[
                             "-m",
                             "uvicorn",
-                            "agent_os.server.app:create_app",
+                            "agent_fabric.server.app:create_app",
                             "--factory",
                             "--host",
                             "127.0.0.1",
@@ -76,7 +76,7 @@ pub fn run() {
                     }
                 }
             } else {
-                println!("AgentOS FastAPI Server is already running on port 8000.");
+                println!("AgentFabric FastAPI Server is already running on port 8000.");
             }
             Ok(())
         })

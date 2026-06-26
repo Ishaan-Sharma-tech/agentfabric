@@ -6,13 +6,13 @@ from unittest.mock import patch, MagicMock, AsyncMock
 from fastapi.testclient import TestClient
 from typer.testing import CliRunner
 
-import agent_os
-from agent_os.core.config import settings
-from agent_os.core.models import Event
-from agent_os.core.events import event_bus
-from agent_os.server.app import create_app
-from agent_os.cli.main import app as cli_app
-from agent_os.observability.event_store import event_store
+import agent_fabric
+from agent_fabric.core.config import settings
+from agent_fabric.core.models import Event
+from agent_fabric.core.events import event_bus
+from agent_fabric.server.app import create_app
+from agent_fabric.cli.main import app as cli_app
+from agent_fabric.observability.event_store import event_store
 
 
 # --- API Server Tests ---
@@ -20,8 +20,8 @@ from agent_os.observability.event_store import event_store
 def test_api_server_endpoints():
     """Test REST endpoints on the FastAPI server."""
     with TemporaryDirectory() as temp_dir:
-        old_dir = settings.agentos_dir
-        settings.agentos_dir = Path(temp_dir)
+        old_dir = settings.agentfabric_dir
+        settings.agentfabric_dir = Path(temp_dir)
         
         try:
             app = create_app()
@@ -54,15 +54,15 @@ def test_api_server_endpoints():
             assert "fully implemented" in res_search.json()[0]["text"]
             
         finally:
-            settings.agentos_dir = old_dir
+            settings.agentfabric_dir = old_dir
 
 
 @pytest.mark.asyncio
 async def test_api_server_websocket():
     """Test that the WebSocket event endpoint streams EventBus updates to the client."""
     with TemporaryDirectory() as temp_dir:
-        old_dir = settings.agentos_dir
-        settings.agentos_dir = Path(temp_dir)
+        old_dir = settings.agentfabric_dir
+        settings.agentfabric_dir = Path(temp_dir)
         
         try:
             app = create_app()
@@ -89,7 +89,7 @@ async def test_api_server_websocket():
                 assert data["data"]["test"] == "socket"
                 
         finally:
-            settings.agentos_dir = old_dir
+            settings.agentfabric_dir = old_dir
 
 
 # --- CLI Command Tests ---
@@ -97,9 +97,9 @@ async def test_api_server_websocket():
 def test_cli_workspace_commands():
     """Verify that Typer workspace commands list and create workspaces correctly."""
     with TemporaryDirectory() as temp_dir:
-        old_dir = settings.agentos_dir
+        old_dir = settings.agentfabric_dir
         old_ws = settings.current_workspace
-        settings.agentos_dir = Path(temp_dir)
+        settings.agentfabric_dir = Path(temp_dir)
         settings.current_workspace = "default"
         
         try:
@@ -122,21 +122,21 @@ def test_cli_workspace_commands():
             assert settings.current_workspace == "test-cli-ws"
             
         finally:
-            settings.agentos_dir = old_dir
+            settings.agentfabric_dir = old_dir
             settings.current_workspace = old_ws
 
 
 # --- SDK Shortcut Tests ---
 
-@patch("agent_os.runtime.agent.Agent.run")
+@patch("agent_fabric.runtime.agent.Agent.run")
 def test_sdk_run_shortcut(mock_agent_run):
-    """Verify that agent_os.run() shortcut initializes and executes synchronously."""
+    """Verify that agent_fabric.run() shortcut initializes and executes synchronously."""
     # Setup mock return value
-    from agent_os.runtime.agent import AgentResult
+    from agent_fabric.runtime.agent import AgentResult
     mock_agent_run.return_value = AgentResult(text="Shortcut Success", messages=[])
     
     # Run shortcut synchronously with ollama provider (requires no keys or SDK imports)
-    res = agent_os.run("This is a simple shortcut task", provider="ollama")
+    res = agent_fabric.run("This is a simple shortcut task", provider="ollama")
     
     assert res.text == "Shortcut Success"
     mock_agent_run.assert_called_once()

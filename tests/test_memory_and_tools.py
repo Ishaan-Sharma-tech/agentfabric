@@ -4,33 +4,33 @@ import asyncio
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch, MagicMock
-from agent_os.core.models import MemoryRecord
-from agent_os.core.permissions import Capability, AgentOSPermissionError
-from agent_os.core.events import event_bus
-from agent_os.core.config import settings
-from agent_os.core.workspace import Workspace
-from agent_os.memory.sqlite_store import SQLiteMemoryStore
-from agent_os.memory.fts_search import SQLiteFTSSearcher
-from agent_os.memory.knowledge_graph import KnowledgeGraph
-from agent_os.memory.engine import MemoryEngine
-from agent_os.tools.decorator import tool
-from agent_os.tools.registry import tool_registry
-from agent_os.tools.runtime import ToolExecutor
+from agent_fabric.core.models import MemoryRecord
+from agent_fabric.core.permissions import Capability, AgentFabricPermissionError
+from agent_fabric.core.events import event_bus
+from agent_fabric.core.config import settings
+from agent_fabric.core.workspace import Workspace
+from agent_fabric.memory.sqlite_store import SQLiteMemoryStore
+from agent_fabric.memory.fts_search import SQLiteFTSSearcher
+from agent_fabric.memory.knowledge_graph import KnowledgeGraph
+from agent_fabric.memory.engine import MemoryEngine
+from agent_fabric.tools.decorator import tool
+from agent_fabric.tools.registry import tool_registry
+from agent_fabric.tools.runtime import ToolExecutor
 
 
 @pytest.mark.asyncio
 async def test_memory_engine_and_fts():
     """Verify that MemoryEngine can store, FTS search, and delete memories."""
     with TemporaryDirectory() as temp_dir:
-        old_dir = settings.agentos_dir
-        settings.agentos_dir = Path(temp_dir)
+        old_dir = settings.agentfabric_dir
+        settings.agentfabric_dir = Path(temp_dir)
         
         try:
             engine = MemoryEngine()
             
             # 1. Store a memory
             m1_id = await engine.store(
-                text="AgentOS provides a capability-based security model.",
+                text="AgentFabric provides a capability-based security model.",
                 tags=["security", "kernel"],
                 metadata={"version": "1.0"}
             )
@@ -64,21 +64,21 @@ async def test_memory_engine_and_fts():
             assert len(results_after_delete) == 0
             
         finally:
-            settings.agentos_dir = old_dir
+            settings.agentfabric_dir = old_dir
 
 
 def test_knowledge_graph():
     """Verify nodes, edges, neighbors, and shortest path traversal in the Knowledge Graph."""
     with TemporaryDirectory() as temp_dir:
-        old_dir = settings.agentos_dir
-        settings.agentos_dir = Path(temp_dir)
+        old_dir = settings.agentfabric_dir
+        settings.agentfabric_dir = Path(temp_dir)
         
         try:
             graph = KnowledgeGraph()
             
             # 1. Add nodes
             graph.add_node("A", "User", "Alice")
-            graph.add_node("B", "Framework", "AgentOS")
+            graph.add_node("B", "Framework", "AgentFabric")
             graph.add_node("C", "Language", "Python")
             graph.add_node("D", "Library", "Pydantic")
             
@@ -109,7 +109,7 @@ def test_knowledge_graph():
             assert path_a_x is None
             
         finally:
-            settings.agentos_dir = old_dir
+            settings.agentfabric_dir = old_dir
 
 
 def test_tool_decorator_and_schema():
@@ -158,7 +158,7 @@ async def test_tool_executor_and_permissions():
     cap_deny = [Capability(resource="tool", action="execute", scope="other_tool")]
     unauthorized_executor = ToolExecutor("math_agent", cap_deny)
     
-    with pytest.raises(AgentOSPermissionError):
+    with pytest.raises(AgentFabricPermissionError):
         await unauthorized_executor.execute("divide", {"a": 10.0, "b": 2.0})
 
     # 3. Verify event bus propagation
@@ -186,10 +186,10 @@ async def test_tool_executor_and_permissions():
 def test_file_ops_tools(tmp_path):
     """Verify local file read/write operations."""
     test_file = tmp_path / "test.txt"
-    content = "Hello, AgentOS!"
+    content = "Hello, AgentFabric!"
     
     # Test write tool
-    from agent_os.tools.builtin.file_ops import write_file, read_file
+    from agent_fabric.tools.builtin.file_ops import write_file, read_file
     
     write_res = write_file(path=str(test_file), content=content)
     assert "Successfully wrote" in write_res
@@ -212,18 +212,18 @@ def test_url_reader_mocked(mock_urlopen):
         <body>
             <script>console.log('strip me');</script>
             <style>body { background: red; }</style>
-            <h1>AgentOS Kernel</h1>
+            <h1>AgentFabric Kernel</h1>
             <p>This is a zero-config agent runtime.</p>
         </body>
     </html>
     """
     mock_urlopen.return_value.__enter__.return_value = mock_response
 
-    from agent_os.tools.builtin.url_reader import url_reader
+    from agent_fabric.tools.builtin.url_reader import url_reader
     
     res = url_reader("https://example.com/test")
     # Verify that tags, scripts, and styles are stripped
-    assert "AgentOS Kernel" in res
+    assert "AgentFabric Kernel" in res
     assert "console.log" not in res
     assert "background: red" not in res
     assert "html" not in res

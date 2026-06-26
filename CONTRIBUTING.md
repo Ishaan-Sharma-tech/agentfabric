@@ -1,6 +1,6 @@
-# Contributing to AgentOS
+# Contributing to AgentFabric
 
-Thank you for your interest in contributing to AgentOS! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to AgentFabric! This document provides guidelines and instructions for contributing.
 
 ---
 
@@ -26,7 +26,7 @@ This project follows the [Contributor Covenant Code of Conduct](https://www.cont
 
 ## How to Contribute
 
-There are many ways to contribute to AgentOS:
+There are many ways to contribute to AgentFabric:
 
 - **Report bugs** — Open an issue describing the bug, steps to reproduce, and expected behavior
 - **Suggest features** — Open an issue describing the feature and its use case
@@ -50,8 +50,8 @@ There are many ways to contribute to AgentOS:
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/Ishaan-Sharma-tech/agent-os.git
-cd agent-os
+git clone https://github.com/Ishaan-Sharma-tech/agent-fabric.git
+cd agent-fabric
 ```
 
 ### Install Dependencies
@@ -71,7 +71,7 @@ uv sync --dev
 uv run pytest tests/ -v
 
 # Run tests with coverage
-uv run pytest tests/ -v --cov=agent_os --cov-report=html
+uv run pytest tests/ -v --cov=agent_fabric --cov-report=html
 
 # Run a specific test file
 uv run pytest tests/test_agent.py -v
@@ -107,8 +107,8 @@ pnpm tauri dev
 ## Project Structure
 
 ```
-agent-os/
-├── src/agent_os/           # Main Python package
+agent-fabric/
+├── src/agent_fabric/           # Main Python package
 │   ├── core/               # EventBus, config, models, permissions, protocols
 │   ├── runtime/            # Agent lifecycle, enhance(), teams, execution
 │   ├── memory/             # Memory engine, SQLite, FTS, vector search, knowledge graph
@@ -123,17 +123,17 @@ agent-os/
 │   └── cli/                # Typer CLI commands
 │
 ├── providers/              # LLM provider packages (separate installs)
-│   ├── agent-os-openai/
-│   ├── agent-os-anthropic/
-│   ├── agent-os-google/
-│   └── agent-os-ollama/
+│   ├── agent-fabric-openai/
+│   ├── agent-fabric-anthropic/
+│   ├── agent-fabric-google/
+│   └── agent-fabric-ollama/
 │
 ├── plugins/                # Official plugin packages (separate installs)
-│   ├── agent-os-plugin-github/
-│   ├── agent-os-plugin-gmail/
-│   ├── agent-os-plugin-slack/
-│   ├── agent-os-plugin-notion/
-│   └── agent-os-plugin-calendar/
+│   ├── agent-fabric-plugin-github/
+│   ├── agent-fabric-plugin-gmail/
+│   ├── agent-fabric-plugin-slack/
+│   ├── agent-fabric-plugin-notion/
+│   └── agent-fabric-plugin-calendar/
 │
 ├── studio/                 # Tauri + SvelteKit desktop app
 ├── docs/                   # Documentation
@@ -153,12 +153,12 @@ agent-os/
 - **Models**: Use Pydantic v2 for all data models and configuration.
 - **Async**: Use `async/await` for I/O operations. Agents and tools should be async by default.
 - **Testing**: Write tests for all new functionality. Target 80%+ code coverage.
-- **Imports**: Use absolute imports from `agent_os`.
+- **Imports**: Use absolute imports from `agent_fabric`.
 
 ```python
 # Good
-from agent_os.core.models import AgentConfig
-from agent_os.tools.decorator import tool
+from agent_fabric.core.models import AgentConfig
+from agent_fabric.tools.decorator import tool
 
 # Avoid
 from .models import AgentConfig
@@ -270,7 +270,7 @@ Include:
 - **Steps to reproduce**: Minimal code or commands to reproduce.
 - **Expected behavior**: What should happen.
 - **Actual behavior**: What actually happens.
-- **Environment**: Python version, OS, AgentOS version.
+- **Environment**: Python version, OS, AgentFabric version.
 - **Logs/Errors**: Relevant error messages or stack traces.
 
 ### Feature Requests
@@ -285,16 +285,16 @@ Include:
 
 ## Plugin Development
 
-Plugins extend AgentOS with new tools, skills, and integrations.
+Plugins extend AgentFabric with new tools, skills, and integrations.
 
 ### Plugin Structure
 
 ```
-agent-os-plugin-example/
+agent-fabric-plugin-example/
 ├── pyproject.toml
 ├── plugin.yaml              # Plugin manifest
 ├── src/
-│   └── agent_os_plugin_example/
+│   └── agent_fabric_plugin_example/
 │       ├── __init__.py
 │       ├── tools.py         # Tool implementations
 │       └── skills/
@@ -305,13 +305,13 @@ agent-os-plugin-example/
 ### Plugin Manifest (`plugin.yaml`)
 
 ```yaml
-name: agent-os-plugin-example
+name: agent-fabric-plugin-example
 version: "0.1.0"
-description: "Example AgentOS plugin"
+description: "Example AgentFabric plugin"
 author: "Your Name"
 
 tools:
-  - agent_os_plugin_example.tools:ExampleTool
+  - agent_fabric_plugin_example.tools:ExampleTool
 
 skills:
   - skills/example.yaml
@@ -333,14 +333,14 @@ capabilities_required:
 In your `pyproject.toml`:
 
 ```toml
-[project.entry-points."agentos.plugins"]
-example = "agent_os_plugin_example"
+[project.entry-points."agentfabric.plugins"]
+example = "agent_fabric_plugin_example"
 ```
 
 ### Testing Plugins
 
 ```python
-from agent_os import Agent
+from agent_fabric import Agent
 
 agent = Agent("test", tools=["example_tool"])
 result = agent.run("Use the example tool")
@@ -354,4 +354,4 @@ If you have questions about contributing, open a [Discussion](../../discussions)
 
 ---
 
-Thank you for contributing to AgentOS! 🚀
+Thank you for contributing to AgentFabric! 🚀

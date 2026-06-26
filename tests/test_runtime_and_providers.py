@@ -4,24 +4,24 @@ import asyncio
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch, MagicMock, AsyncMock
-from agent_os.core.config import settings
-from agent_os.core.models import Event
-from agent_os.core.events import event_bus
-from agent_os.core.workspace import Workspace
-from agent_os.runtime.agent import Agent, AgentResult
-from agent_os.runtime.enhance import enhance
-from agent_os.runtime.runtime import Runtime
-from agent_os.observability.event_store import event_store
-from agent_os.providers.openai import OpenAIProvider
-from agent_os.providers.ollama import OllamaProvider
+from agent_fabric.core.config import settings
+from agent_fabric.core.models import Event
+from agent_fabric.core.events import event_bus
+from agent_fabric.core.workspace import Workspace
+from agent_fabric.runtime.agent import Agent, AgentResult
+from agent_fabric.runtime.enhance import enhance
+from agent_fabric.runtime.runtime import Runtime
+from agent_fabric.observability.event_store import event_store
+from agent_fabric.providers.openai import OpenAIProvider
+from agent_fabric.providers.ollama import OllamaProvider
 
 
 @pytest.mark.asyncio
 async def test_event_store_persistence():
     """Verify that EventBus events are automatically persisted to the SQLite EventStore."""
     with TemporaryDirectory() as temp_dir:
-        old_dir = settings.agentos_dir
-        settings.agentos_dir = Path(temp_dir)
+        old_dir = settings.agentfabric_dir
+        settings.agentfabric_dir = Path(temp_dir)
         
         try:
             # Re-initialize event store table under the new directory path
@@ -44,12 +44,12 @@ async def test_event_store_persistence():
             assert "ToolInvoked" in types
             
         finally:
-            settings.agentos_dir = old_dir
+            settings.agentfabric_dir = old_dir
 
 
 @pytest.mark.asyncio
-@patch("agent_os.providers.openai.OPENAI_AVAILABLE", True)
-@patch("agent_os.providers.openai.AsyncOpenAI", create=True)
+@patch("agent_fabric.providers.openai.OPENAI_AVAILABLE", True)
+@patch("agent_fabric.providers.openai.AsyncOpenAI", create=True)
 async def test_openai_provider(mock_openai_class):
     """Test that OpenAIProvider formats requests and parses responses correctly."""
     # Mock AsyncOpenAI client
@@ -59,7 +59,7 @@ async def test_openai_provider(mock_openai_class):
     # Mock completions create response
     func_mock = MagicMock()
     func_mock.name = "web_search"
-    func_mock.arguments = '{"query": "AgentOS"}'
+    func_mock.arguments = '{"query": "AgentFabric"}'
     
     tc_mock = MagicMock()
     tc_mock.id = "call_1"
@@ -88,15 +88,15 @@ async def test_openai_provider(mock_openai_class):
     assert res["content"] == "Response from OpenAI"
     assert len(res["tool_calls"]) == 1
     assert res["tool_calls"][0]["name"] == "web_search"
-    assert res["tool_calls"][0]["arguments"] == {"query": "AgentOS"}
+    assert res["tool_calls"][0]["arguments"] == {"query": "AgentFabric"}
 
 
 @pytest.mark.asyncio
 async def test_agent_execution_loop():
     """Verify that Agent executes LLM calls, handles tool loops, and persists output to memory."""
     with TemporaryDirectory() as temp_dir:
-        old_dir = settings.agentos_dir
-        settings.agentos_dir = Path(temp_dir)
+        old_dir = settings.agentfabric_dir
+        settings.agentfabric_dir = Path(temp_dir)
         
         try:
             # Setup a mock LLM Provider
@@ -149,22 +149,22 @@ async def test_agent_execution_loop():
             agent.logger.handlers.clear()
             
         finally:
-            settings.agentos_dir = old_dir
+            settings.agentfabric_dir = old_dir
 
 
 @pytest.mark.asyncio
 async def test_enhance_byoa_wrapper():
     """Verify that enhance() wraps classes, intercepts calls, and injects memory context."""
     with TemporaryDirectory() as temp_dir:
-        old_dir = settings.agentos_dir
-        settings.agentos_dir = Path(temp_dir)
+        old_dir = settings.agentfabric_dir
+        settings.agentfabric_dir = Path(temp_dir)
         
         try:
             # Ensure event_store has its tables created in the temp db
             event_store._ensure_table()
             
             # 1. Store a memory we expect to be retrieved
-            from agent_os.memory.engine import memory_engine
+            from agent_fabric.memory.engine import memory_engine
             await memory_engine.store(
                 text="The secret code is 12345.",
                 tags=["secrets"]
@@ -196,4 +196,4 @@ async def test_enhance_byoa_wrapper():
             assert any("Result: Executed:" in t for t in texts)
             
         finally:
-            settings.agentos_dir = old_dir
+            settings.agentfabric_dir = old_dir

@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="https://img.shields.io/badge/AgentOS-Runtime_for_AI_Agents-000000?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIzIiBmaWxsPSIjZmZmIi8+PC9zdmc+" alt="AgentOS" />
+<img src="https://img.shields.io/badge/AgentFabric-Runtime_for_AI_Agents-000000?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIzIiBmaWxsPSIjZmZmIi8+PC9zdmc+" alt="AgentFabric" />
 
-# AgentOS
+# AgentFabric
 
 ### The Runtime for AI Agents
 
@@ -21,9 +21,9 @@ Memory · Tools · Permissions · Observability · Scheduling · Pipelines · St
 
 ## Overview
 
-AgentOS is an open-source runtime layer for AI agents. It provides the foundational infrastructure — memory, tools, permissions, observability, scheduling, pipelines, and a desktop studio — that every agent needs to be production-ready.
+AgentFabric is an open-source runtime layer for AI agents. It provides the foundational infrastructure — memory, tools, permissions, observability, scheduling, pipelines, and a desktop studio — that every agent needs to be production-ready.
 
-AgentOS is not another agent framework. It does not replace LangGraph, CrewAI, AutoGen, or the OpenAI SDK. It works **alongside** them, providing the infrastructure layer underneath.
+AgentFabric is not another agent framework. It does not replace LangGraph, CrewAI, AutoGen, or the OpenAI SDK. It works **alongside** them, providing the infrastructure layer underneath.
 
 ```
 ┌──────────────────────────────────────────────────┐
@@ -36,7 +36,7 @@ AgentOS is not another agent framework. It does not replace LangGraph, CrewAI, A
 └──────────────────┬───────────────────────────────┘
                    │
 ╔══════════════════▼═══════════════════════════════╗
-║                 AgentOS Runtime                   ║
+║                 AgentFabric Runtime                   ║
 ║  Memory · Tools · Permissions · Observability     ║
 ║  Scheduler · Pipelines · EventBus · Plugins       ║
 ║  Knowledge Graph · Workspaces · Agent Teams       ║
@@ -50,13 +50,13 @@ AgentOS is not another agent framework. It does not replace LangGraph, CrewAI, A
 ### Installation
 
 ```bash
-pip install agent-os
+pip install agent-fabric
 ```
 
 ### Create Your First Agent
 
 ```python
-from agent_os import Agent
+from agent_fabric import Agent
 
 agent = Agent("researcher")
 result = agent.run("What are the latest breakthroughs in quantum computing?")
@@ -78,7 +78,7 @@ export OPENAI_API_KEY="sk-..."
 An agent is an autonomous entity that can think, use tools, remember information, and collaborate with other agents.
 
 ```python
-from agent_os import Agent
+from agent_fabric import Agent
 
 agent = Agent(
     name="analyst",
@@ -93,7 +93,7 @@ result = agent.run("Analyze the trends in this dataset")
 Tools give agents the ability to interact with the outside world. Create custom tools with the `@tool` decorator:
 
 ```python
-from agent_os import Agent, tool
+from agent_fabric import Agent, tool
 
 @tool("Search the web for information")
 def web_search(query: str) -> str:
@@ -113,7 +113,7 @@ agent = Agent("researcher", tools=[web_search, read_url])
 Agents automatically persist memory across sessions. You can also use memory directly:
 
 ```python
-from agent_os import memory
+from agent_fabric import memory
 
 memory.store("Project deadline is March 15th", tags=["projects", "deadlines"])
 results = memory.search("upcoming deadlines")
@@ -124,7 +124,7 @@ results = memory.search("upcoming deadlines")
 Multiple agents can collaborate on complex tasks:
 
 ```python
-from agent_os import Agent, Team
+from agent_fabric import Agent, Team
 
 researcher = Agent("researcher", role="Research topics thoroughly")
 writer = Agent("writer", role="Write clear, engaging content")
@@ -162,7 +162,7 @@ nodes:
 ```
 
 ```python
-from agent_os import Pipeline, Schedule
+from agent_fabric import Pipeline, Schedule
 
 pipeline = Pipeline.from_yaml("pipeline.yaml")
 
@@ -175,10 +175,10 @@ Schedule(pipeline, cron="0 8 * * *")  # Every day at 8 AM
 
 ### Bring Your Own Agent
 
-Already have an existing agent? Add AgentOS infrastructure without rewriting it:
+Already have an existing agent? Add AgentFabric infrastructure without rewriting it:
 
 ```python
-from agent_os import enhance
+from agent_fabric import enhance
 
 # Your existing agent — any Python class
 class MyExistingBot:
@@ -192,14 +192,14 @@ bot.run("Analyze this data")
 
 ### Framework Adapters
 
-Use AgentOS with your existing framework:
+Use AgentFabric with your existing framework:
 
 ```python
-from agent_os.adapters import LangGraphAdapter
+from agent_fabric.adapters import LangGraphAdapter
 
 agent = LangGraphAdapter(my_langgraph_app)
 agent.run("Do research")
-# Your LangGraph agent now has AgentOS memory and observability
+# Your LangGraph agent now has AgentFabric memory and observability
 ```
 
 Adapters are available for OpenAI Agents SDK, LangGraph, and CrewAI.
@@ -208,7 +208,7 @@ Adapters are available for OpenAI Agents SDK, LangGraph, and CrewAI.
 
 ## 🏗️ Architecture
 
-AgentOS is built as a modular runtime with the following core systems:
+AgentFabric is built as a modular runtime with the following core systems:
 
 | System | Purpose |
 |---|---|
@@ -236,9 +236,9 @@ AgentOS is built as a modular runtime with the following core systems:
 
 ---
 
-## 🖥️ AgentOS Studio
+## 🖥️ AgentFabric Studio
 
-AgentOS Studio is a desktop application for managing your AI infrastructure visually.
+AgentFabric Studio is a desktop application for managing your AI infrastructure visually.
 
 | Module | Description |
 |---|---|
@@ -252,7 +252,7 @@ AgentOS Studio is a desktop application for managing your AI infrastructure visu
 Built with Tauri and SvelteKit for a lightweight, fast, cross-platform experience.
 
 ```bash
-agentos studio
+agentfabric studio
 ```
 
 ---
@@ -261,18 +261,18 @@ agentos studio
 
 ### LLM Providers
 
-AgentOS is model-agnostic. Configure your preferred provider:
+AgentFabric is model-agnostic. Configure your preferred provider:
 
 | Provider | Package |
 |---|---|
-| OpenAI (GPT-4o, o3, o4-mini) | `agent-os-openai` |
-| Anthropic (Claude) | `agent-os-anthropic` |
-| Google (Gemini) | `agent-os-google` |
-| Ollama (Local models) | `agent-os-ollama` |
+| OpenAI (GPT-4o, o3, o4-mini) | `agent-fabric-openai` |
+| Anthropic (Claude) | `agent-fabric-anthropic` |
+| Google (Gemini) | `agent-fabric-google` |
+| Ollama (Local models) | `agent-fabric-ollama` |
 
 ### Plugins
 
-Extend AgentOS with integrations:
+Extend AgentFabric with integrations:
 
 | Plugin | Capabilities |
 |---|---|
@@ -284,10 +284,10 @@ Extend AgentOS with integrations:
 
 ### MCP Compatibility
 
-AgentOS supports the [Model Context Protocol](https://modelcontextprotocol.io/):
+AgentFabric supports the [Model Context Protocol](https://modelcontextprotocol.io/):
 
-- **Expose** AgentOS tools as MCP servers for use in Claude Desktop, Cursor, and other MCP clients
-- **Consume** external MCP servers as AgentOS tools
+- **Expose** AgentFabric tools as MCP servers for use in Claude Desktop, Cursor, and other MCP clients
+- **Consume** external MCP servers as AgentFabric tools
 
 ---
 
@@ -296,9 +296,9 @@ AgentOS supports the [Model Context Protocol](https://modelcontextprotocol.io/):
 ### Quick Reference
 
 ```python
-from agent_os import Agent, Team, Pipeline, Schedule
-from agent_os import tool, memory, enhance
-from agent_os import Runtime
+from agent_fabric import Agent, Team, Pipeline, Schedule
+from agent_fabric import tool, memory, enhance
+from agent_fabric import Runtime
 ```
 
 | Import | Purpose |
@@ -309,7 +309,7 @@ from agent_os import Runtime
 | `Schedule` | Automated scheduling |
 | `tool` | `@tool` decorator for custom tools |
 | `memory` | Direct memory access |
-| `enhance` | Add AgentOS to existing agents |
+| `enhance` | Add AgentFabric to existing agents |
 | `Runtime` | Advanced runtime configuration |
 
 ### Runtime Configuration
@@ -317,7 +317,7 @@ from agent_os import Runtime
 For advanced use cases, configure the runtime explicitly:
 
 ```python
-from agent_os import Runtime, Agent
+from agent_fabric import Runtime, Agent
 
 runtime = Runtime(
     workspace="my-project",
@@ -332,15 +332,15 @@ agent = Agent("analyst", runtime=runtime)
 ### CLI
 
 ```bash
-agentos run "Research AI trends"       # One-shot agent
-agentos agent start <name>             # Start a persistent agent
-agentos agent list                     # List running agents
-agentos memory search "query"          # Search memory
-agentos pipeline run pipeline.yaml     # Run a pipeline
-agentos schedule create --cron "..."   # Create a schedule
-agentos studio                         # Open the Studio
-agentos plugin list                    # List installed plugins
-agentos workspace list                 # List workspaces
+agentfabric run "Research AI trends"       # One-shot agent
+agentfabric agent start <name>             # Start a persistent agent
+agentfabric agent list                     # List running agents
+agentfabric memory search "query"          # Search memory
+agentfabric pipeline run pipeline.yaml     # Run a pipeline
+agentfabric schedule create --cron "..."   # Create a schedule
+agentfabric studio                         # Open the Studio
+agentfabric plugin list                    # List installed plugins
+agentfabric workspace list                 # List workspaces
 ```
 
 ---
@@ -369,12 +369,12 @@ Please read our [Contributing Guide](CONTRIBUTING.md) for development setup, cod
 
 ## 📄 License
 
-AgentOS is licensed under the [Apache License 2.0](LICENSE).
+AgentFabric is licensed under the [Apache License 2.0](LICENSE).
 
 ---
 
 <div align="center">
 
-**AgentOS — The foundational infrastructure layer for AI-native applications.**
+**AgentFabric — The foundational infrastructure layer for AI-native applications.**
 
 </div>

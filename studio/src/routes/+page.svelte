@@ -312,7 +312,7 @@
           <h3 class="panel-header">DIAGNOSTICS & SYSTEM META</h3>
           <div class="info-row">
             <span class="info-label">Active Database Path:</span>
-            <span class="info-value font-mono">{activeWorkspacePath ? activeWorkspacePath + '/agentos.db' : 'N/A'}</span>
+            <span class="info-value font-mono">{activeWorkspacePath ? activeWorkspacePath + '/agentfabric.db' : 'N/A'}</span>
           </div>
           <div class="info-row">
             <span class="info-label">Backend Connection Status:</span>

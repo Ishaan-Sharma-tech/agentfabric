@@ -144,5 +144,5 @@ cython_debug/
 .DS_Store
 Thumbs.db
 
-# AgentOS local run directory
-.agentos/
+# AgentFabric local run directory
+.agentfabric/

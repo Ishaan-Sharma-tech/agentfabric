@@ -1,11 +1,11 @@
 [project]
-name = "agent-os"
+name = "agent-fabric"
 version = "0.1.0"
 description = "The runtime for AI agents."
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [
-    { name = "AgentOS Contributors" }
+    { name = "AgentFabric Contributors" }
 ]
 license = { text = "Apache-2.0" }
 dependencies = [
@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.scripts]
-agentos = "agent_os.cli.main:app"
+agentfabric = "agent_fabric.cli.main:app"
 
 [project.optional-dependencies]
 vectors = [
@@ -39,7 +39,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/agent_os"]
+packages = ["src/agent_fabric"]
 
 [dependency-groups]
 dev = [
