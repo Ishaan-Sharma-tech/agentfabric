@@ -1,6 +1,8 @@
 from typing import Optional
-from agent_fabric.core.config import settings
+from agent_fabric.core.config import settings, AgentFabricSettings
 from agent_fabric.core.workspace import Workspace
+
+__all__ = ["Runtime"]
 
 
 class Runtime:
@@ -31,6 +33,7 @@ class Runtime:
         return Workspace.current()
 
     @property
-    def settings(self):
-        """Access global runtime settings."""
+    def settings(self) -> AgentFabricSettings:
+        """Access runtime settings."""
         return settings
+

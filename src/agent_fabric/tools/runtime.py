@@ -2,7 +2,7 @@ import time
 import logging
 import traceback
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from agent_fabric.core.events import event_bus
 from agent_fabric.core.models import Event, ToolCall
 from agent_fabric.core.permissions import Capability, check_permission, AgentFabricPermissionError
@@ -10,6 +10,8 @@ from agent_fabric.core.workspace import Workspace
 from agent_fabric.tools.registry import tool_registry
 
 logger = logging.getLogger("agent_fabric.tools.runtime")
+
+__all__ = ["ToolExecutor"]
 
 
 class ToolExecutor:
@@ -31,7 +33,6 @@ class ToolExecutor:
             raise ValueError(f"Tool '{tool_name}' is not registered in the system.")
 
         # 1. Permission Check
-        # Default requirement: Capability(resource="tool", action="execute", scope=tool_name)
         required_cap = getattr(
             tool, 
             "required_capability", 
@@ -44,7 +45,6 @@ class ToolExecutor:
         # 2. ToolCall Lifecycle Init
         tool_call = ToolCall(name=tool_name, arguments=arguments)
         
-        # Publish ToolInvoked Event
         invoked_event = Event(
             event_type="ToolInvoked",
             actor=f"agent:{self.agent_name}",
@@ -64,10 +64,10 @@ class ToolExecutor:
         error_msg = None
         
         try:
-            logger.info(f"Agent '{self.agent_name}' invoking tool '{tool_name}' with args {arguments}")
+            arg_keys = list(arguments.keys()) if isinstance(arguments, dict) else []
+            logger.info(f"Agent '{self.agent_name}' invoking tool '{tool_name}' with parameters {arg_keys}")
             result = await tool.execute(**arguments)
             
-            # Stringify result for standardized token representations
             if not isinstance(result, str):
                 result = str(result)
                 
@@ -80,7 +80,6 @@ class ToolExecutor:
             tool_call.finished_at = datetime.now(timezone.utc)
             duration = time.perf_counter() - start_time
             
-            # Publish ToolResult Event
             result_event = Event(
                 event_type="ToolResult",
                 actor=f"agent:{self.agent_name}",
@@ -100,3 +99,4 @@ class ToolExecutor:
             raise RuntimeError(f"Tool execution failed: {tool_call.error}")
             
         return tool_call.result
+

@@ -1,9 +1,14 @@
+import logging
 from typing import List, Optional, Dict, Any
 from agent_fabric.core.config import settings
 from agent_fabric.core.models import MemoryRecord
 from agent_fabric.memory.sqlite_store import SQLiteMemoryStore
 from agent_fabric.memory.fts_search import SQLiteFTSSearcher
 from agent_fabric.memory.knowledge_graph import KnowledgeGraph
+
+logger = logging.getLogger("agent_fabric.memory.engine")
+
+__all__ = ["MemoryEngine", "memory_engine", "graph", "store", "search", "list_records", "delete"]
 
 
 class MemoryEngine:
@@ -21,7 +26,6 @@ class MemoryEngine:
         """Dynamically resolve the configured backend."""
         if settings.memory_backend in ("vector", "qdrant"):
             if self._vector_store is None:
-                # Lazy load vector store dependencies only when vector backend is active
                 from agent_fabric.memory.vector_store import QdrantVectorStore
                 vector_path = str(settings.agentfabric_dir / "workspaces" / settings.current_workspace / "qdrant_db")
                 self._vector_store = QdrantVectorStore(location=vector_path)
@@ -48,13 +52,14 @@ class MemoryEngine:
             importance_score=importance_score
         )
         
-        # SQLite persistence is always active as a local database source of truth
-        self.sqlite_store.store(record)
+        await self.sqlite_store.store(record)
         
-        # Write to optional vector backend if configured
         backend = self._get_active_backend()
         if backend is not self.sqlite_store:
-            await backend.store(record)
+            try:
+                await backend.store(record)
+            except Exception as e:
+                logger.warning(f"Failed to store record in vector backend: {e}", exc_info=True)
             
         return record.id
 
@@ -72,11 +77,10 @@ class MemoryEngine:
         if backend is not self.sqlite_store:
             try:
                 return await backend.search(query, limit, filters)
-            except Exception:
-                # Graceful fallback to FTS5 search if vector client query fails
-                pass
+            except Exception as e:
+                logger.warning(f"Vector search failed; falling back to FTS5 search: {e}", exc_info=True)
                 
-        return self.fts_searcher.search(query, limit, filters)
+        return await self.fts_searcher.search(query, limit, filters)
 
     async def list_records(
         self, 
@@ -88,20 +92,20 @@ class MemoryEngine:
         if backend is not self.sqlite_store:
             try:
                 return await backend.list_records(limit, filters)
-            except Exception:
-                pass
-        return self.sqlite_store.list_all(limit, filters)
+            except Exception as e:
+                logger.warning(f"Vector backend list_records failed; falling back to SQLite: {e}", exc_info=True)
+        return await self.sqlite_store.list_all(limit, filters)
 
     async def delete(self, record_id: str) -> None:
         """Delete a memory record from active backends by ID."""
-        self.sqlite_store.delete(record_id)
+        await self.sqlite_store.delete(record_id)
         
         backend = self._get_active_backend()
         if backend is not self.sqlite_store:
             try:
                 await backend.delete(record_id)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Vector backend delete failed for record '{record_id}': {e}", exc_info=True)
 
 
 # Global singleton facade
@@ -136,3 +140,4 @@ async def list_records(
 
 async def delete(record_id: str) -> None:
     await memory_engine.delete(record_id)
+

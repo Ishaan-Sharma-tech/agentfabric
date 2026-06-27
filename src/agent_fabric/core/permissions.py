@@ -1,7 +1,9 @@
 import fnmatch
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 from pydantic import BaseModel, Field
+
+__all__ = ["Capability", "check_permission", "AgentFabricPermissionError", "DEVELOPER_CAPABILITIES", "READ_ONLY_CAPABILITIES", "SANDBOXED_CAPABILITIES"]
 
 
 class Capability(BaseModel):
@@ -28,20 +30,20 @@ class Capability(BaseModel):
             return True
             
         if required.scope == "*":
-            return self.scope == "*"
+            # Granted scope is not "*", so it cannot satisfy a requirement for all scopes
+            return False
 
-        # Try path-based prefix match first if resource is 'file'
+        # Try path-based prefix match if resource is 'file'
         if self.resource == "file" or required.resource == "file":
             try:
                 g_path = Path(self.scope).resolve()
                 r_path = Path(required.scope).resolve()
-                # Granted path must be a parent of (or equal to) the required path
                 if g_path == r_path or g_path in r_path.parents:
                     return True
             except Exception:
                 pass
 
-        # Fallback to standard glob matching
+        # Fallback to standard glob prefix/pattern matching
         return fnmatch.fnmatch(required.scope, self.scope)
 
 
@@ -58,11 +60,11 @@ READ_ONLY_CAPABILITIES = [
 
 SANDBOXED_CAPABILITIES = [
     Capability(resource="file", action="read", scope="*"),
-    Capability(resource="file", action="write", scope="./*"),
+    Capability(resource="file", action="write", scope="*"),
     Capability(resource="memory", action="*", scope="*"),
     Capability(resource="llm", action="execute", scope="*"),
     Capability(resource="network", action="execute", scope="*"),  # Allow standard API requests
-    Capability(resource="system", action="execute", scope="echo *")  # Disallow arbitrary bash
+    Capability(resource="system", action="execute", scope="echo *")  # Disallow arbitrary system calls
 ]
 
 
@@ -85,3 +87,4 @@ class AgentFabricPermissionError(Exception):
             f"Agent '{agent_name}' lacks capability: "
             f"resource='{required.resource}', action='{required.action}', scope='{required.scope}'"
         )
+

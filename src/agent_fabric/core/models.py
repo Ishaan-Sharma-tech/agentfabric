@@ -3,6 +3,8 @@ from typing import Dict, Any, List, Optional
 from uuid import uuid4
 from pydantic import BaseModel, Field
 
+__all__ = ["AgentConfig", "ToolCall", "Event", "MemoryRecord", "WorkspaceConfig"]
+
 
 class AgentConfig(BaseModel):
     """Configuration for an Agent instance."""
@@ -51,6 +53,10 @@ class MemoryRecord(BaseModel):
     accessed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     importance_score: float = Field(default=1.0)
 
+    def mark_accessed(self) -> None:
+        """Update the accessed_at timestamp to current UTC time."""
+        self.accessed_at = datetime.now(timezone.utc)
+
 
 class WorkspaceConfig(BaseModel):
     """Configuration metadata for a workspace."""
@@ -59,3 +65,4 @@ class WorkspaceConfig(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     active: bool = Field(default=True)
     metadata: Dict[str, Any] = Field(default_factory=dict)
+

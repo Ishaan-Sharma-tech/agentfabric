@@ -1,9 +1,10 @@
 import functools
 import inspect
-from typing import Callable, Any, Optional, Union, overload
-from agent_fabric.core.protocols import ToolProtocol
+from typing import Callable, Any, Optional, Union
 from agent_fabric.tools.schema import generate_tool_schema
 from agent_fabric.tools.registry import tool_registry
+
+__all__ = ["FunctionTool", "tool"]
 
 
 class FunctionTool:
@@ -45,7 +46,8 @@ class FunctionTool:
         return self.func(*args, **kwargs)
 
     def __repr__(self) -> str:
-        return f"FunctionTool(name='{self.name}', description='{self.description[:40]}...')"
+        desc = self.description[:40] + ("..." if len(self.description) > 40 else "")
+        return f"FunctionTool(name={self.name!r}, description={desc!r})"
 
 
 def tool(
@@ -56,16 +58,6 @@ def tool(
 ) -> Any:
     """
     @tool decorator to convert standard Python functions into AgentFabric tools.
-    Supports usage with or without arguments:
-    
-    @tool
-    def search(query: str) -> str:
-        '''Search the web.'''
-        ...
-        
-    @tool(name="web_search", description="Search Google")
-    def search(query: str) -> str:
-        ...
     """
     if callable(arg):
         # Decorated directly: @tool
@@ -81,3 +73,4 @@ def tool(
         return ft
 
     return decorator
+

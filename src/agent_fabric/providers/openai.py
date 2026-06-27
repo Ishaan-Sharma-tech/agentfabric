@@ -6,6 +6,8 @@ from agent_fabric.core.protocols import LLMProvider
 
 logger = logging.getLogger("agent_fabric.providers.openai")
 
+__all__ = ["format_openai_tools", "OpenAIProvider"]
+
 try:
     from openai import AsyncOpenAI
     OPENAI_AVAILABLE = True
@@ -21,29 +23,31 @@ def format_openai_tools(tools: Optional[List[Any]]) -> Optional[List[Dict[str, A
     formatted = []
     for t in tools:
         if hasattr(t, "name") and hasattr(t, "parameters"):
-            # It's a ToolProtocol instance
             formatted.append({
                 "type": "function",
                 "function": {
-                    "name": t.name,
-                    "description": t.description,
-                    "parameters": t.parameters
+                    "name": getattr(t, "name"),
+                    "description": getattr(t, "description", ""),
+                    "parameters": getattr(t, "parameters", {})
                 }
             })
         elif isinstance(t, dict):
-            # Already formatted or raw dict schema
             if "type" in t and t["type"] == "function":
                 formatted.append(t)
-            else:
+            elif "name" in t:
                 formatted.append({
                     "type": "function",
                     "function": {
-                        "name": t.get("name"),
+                        "name": t["name"],
                         "description": t.get("description", ""),
                         "parameters": t.get("parameters", {"type": "object", "properties": {}})
                     }
                 })
-    return formatted
+            else:
+                logger.warning(f"Skipping invalid tool dict missing 'name' or 'type': {t}")
+        else:
+            logger.warning(f"Skipping unrecognized tool object type: {type(t)}")
+    return formatted or None
 
 
 class OpenAIProvider(LLMProvider):
@@ -62,8 +66,7 @@ class OpenAIProvider(LLMProvider):
                 "pip install agent-fabric[openai]"
             )
             
-        # Prioritize key passed in constructor, then config file settings, then fallback to environment
-        key = api_key or settings.providers.openai_api_key
+        key = api_key or (settings.providers.openai_api_key.get_secret_value() if settings.providers.openai_api_key else None)
         if not key:
             raise ValueError(
                 "OpenAI API Key is missing. Please set the OPENAI_API_KEY environment variable "
@@ -103,13 +106,13 @@ class OpenAIProvider(LLMProvider):
         response = await self.client.chat.completions.create(**call_params)
         message = response.choices[0].message
         
-        # Parse tool calls
         tool_calls = []
         if message.tool_calls:
             for tc in message.tool_calls:
                 try:
-                    args = json.loads(tc.function.arguments)
-                except Exception:
+                    args = json.loads(tc.function.arguments) if tc.function.arguments else {}
+                except Exception as e:
+                    logger.warning(f"Failed to parse tool call arguments '{tc.function.arguments}': {e}")
                     args = {}
                 tool_calls.append({
                     "id": tc.id,
@@ -174,3 +177,4 @@ class OpenAIProvider(LLMProvider):
                     })
                     
             yield chunk_data
+

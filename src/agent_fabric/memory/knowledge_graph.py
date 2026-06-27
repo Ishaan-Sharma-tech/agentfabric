@@ -1,6 +1,9 @@
 import json
+from collections import deque
 from typing import Dict, Any, List, Optional, Set
-from agent_fabric.memory.sqlite_store import get_db_conn
+from agent_fabric.memory.sqlite_store import get_db_conn, sqlite3
+
+__all__ = ["KnowledgeGraph"]
 
 
 class KnowledgeGraph:
@@ -40,7 +43,6 @@ class KnowledgeGraph:
         prop_json = json.dumps(properties or {})
         with get_db_conn() as conn:
             cursor = conn.cursor()
-            # Ensure nodes exist
             cursor.execute("SELECT 1 FROM graph_nodes WHERE id = ?", (source,))
             if not cursor.fetchone():
                 raise ValueError(f"Source node '{source}' does not exist.")
@@ -85,84 +87,79 @@ class KnowledgeGraph:
                 "properties": json.loads(row["properties"]) if row["properties"] else {}
             }
 
-    def neighbors(self, node_id: str) -> List[Dict[str, Any]]:
-        """
-        Get all adjacent nodes connected by incoming or outgoing edges.
-        Returns a list of dicts describing the connected node and edge details.
-        """
+    def _neighbors_with_conn(self, conn: sqlite3.Connection, node_id: str) -> List[Dict[str, Any]]:
         results: List[Dict[str, Any]] = []
-        with get_db_conn() as conn:
-            cursor = conn.cursor()
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT e.target as id, e.relationship, e.properties as edge_props,
+               n.type, n.name, n.properties as node_props
+        FROM graph_edges e
+        JOIN graph_nodes n ON e.target = n.id
+        WHERE e.source = ?
+        """, (node_id,))
+        
+        for row in cursor.fetchall():
+            results.append({
+                "id": row["id"],
+                "name": row["name"],
+                "type": row["type"],
+                "relationship": row["relationship"],
+                "direction": "outgoing",
+                "edge_properties": json.loads(row["edge_props"]) if row["edge_props"] else {},
+                "node_properties": json.loads(row["node_props"]) if row["node_props"] else {}
+            })
             
-            # Outgoing connections (source -> target)
-            cursor.execute("""
-            SELECT e.target as id, e.relationship, e.properties as edge_props,
-                   n.type, n.name, n.properties as node_props
-            FROM graph_edges e
-            JOIN graph_nodes n ON e.target = n.id
-            WHERE e.source = ?
-            """, (node_id,))
+        cursor.execute("""
+        SELECT e.source as id, e.relationship, e.properties as edge_props,
+               n.type, n.name, n.properties as node_props
+        FROM graph_edges e
+        JOIN graph_nodes n ON e.source = n.id
+        WHERE e.target = ?
+        """, (node_id,))
+        
+        for row in cursor.fetchall():
+            results.append({
+                "id": row["id"],
+                "name": row["name"],
+                "type": row["type"],
+                "relationship": row["relationship"],
+                "direction": "incoming",
+                "edge_properties": json.loads(row["edge_props"]) if row["edge_props"] else {},
+                "node_properties": json.loads(row["node_props"]) if row["node_props"] else {}
+            })
             
-            for row in cursor.fetchall():
-                results.append({
-                    "id": row["id"],
-                    "name": row["name"],
-                    "type": row["type"],
-                    "relationship": row["relationship"],
-                    "direction": "outgoing",
-                    "edge_properties": json.loads(row["edge_props"]) if row["edge_props"] else {},
-                    "node_properties": json.loads(row["node_props"]) if row["node_props"] else {}
-                })
-                
-            # Incoming connections (target <- source)
-            cursor.execute("""
-            SELECT e.source as id, e.relationship, e.properties as edge_props,
-                   n.type, n.name, n.properties as node_props
-            FROM graph_edges e
-            JOIN graph_nodes n ON e.source = n.id
-            WHERE e.target = ?
-            """, (node_id,))
-            
-            for row in cursor.fetchall():
-                results.append({
-                    "id": row["id"],
-                    "name": row["name"],
-                    "type": row["type"],
-                    "relationship": row["relationship"],
-                    "direction": "incoming",
-                    "edge_properties": json.loads(row["edge_props"]) if row["edge_props"] else {},
-                    "node_properties": json.loads(row["node_props"]) if row["node_props"] else {}
-                })
-                
         return results
 
+    def neighbors(self, node_id: str) -> List[Dict[str, Any]]:
+        """Get all adjacent nodes connected by incoming or outgoing edges."""
+        with get_db_conn() as conn:
+            return self._neighbors_with_conn(conn, node_id)
+
     def path(self, start_id: str, end_id: str, max_depth: int = 5) -> Optional[List[str]]:
-        """
-        Finds the shortest path between start_id and end_id using Breadth-First Search (BFS).
-        Returns a list of node IDs forming the path, or None if no path exists.
-        """
+        """Finds shortest path using BFS with reusable DB connection."""
         if start_id == end_id:
             return [start_id]
             
-        # BFS Queue holds paths: e.g. [["start_id", "node1", "node2"]]
-        queue: List[List[str]] = [[start_id]]
+        queue: deque[List[str]] = deque([[start_id]])
         visited: Set[str] = {start_id}
         
-        while queue:
-            current_path = queue.pop(0)
-            current_node = current_path[-1]
-            
-            if current_node == end_id:
-                return current_path
+        with get_db_conn() as conn:
+            while queue:
+                current_path = queue.popleft()
+                current_node = current_path[-1]
                 
-            if len(current_path) >= max_depth:
-                continue
-                
-            for neighbor in self.neighbors(current_node):
-                neighbor_id = neighbor["id"]
-                if neighbor_id not in visited:
-                    visited.add(neighbor_id)
-                    new_path = list(current_path) + [neighbor_id]
-                    queue.append(new_path)
+                if current_node == end_id:
+                    return current_path
                     
+                if len(current_path) >= max_depth:
+                    continue
+                    
+                for neighbor in self._neighbors_with_conn(conn, current_node):
+                    neighbor_id = neighbor["id"]
+                    if neighbor_id not in visited:
+                        visited.add(neighbor_id)
+                        new_path = list(current_path) + [neighbor_id]
+                        queue.append(new_path)
+                        
         return None
+

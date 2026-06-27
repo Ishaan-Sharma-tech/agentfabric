@@ -1,4 +1,5 @@
 import json
+import uuid
 import urllib.request
 import urllib.error
 import asyncio
@@ -10,6 +11,8 @@ from agent_fabric.providers.openai import format_openai_tools
 
 logger = logging.getLogger("agent_fabric.providers.ollama")
 
+__all__ = ["OllamaProvider"]
+
 
 class OllamaProvider(LLMProvider):
     """
@@ -20,14 +23,15 @@ class OllamaProvider(LLMProvider):
     def __init__(
         self, 
         host: Optional[str] = None, 
-        default_model: Optional[str] = None
+        default_model: Optional[str] = None,
+        timeout: int = 300
     ):
         self.host = host or settings.providers.ollama_host or "http://localhost:11434"
-        # Standardize host URL
         if self.host.endswith("/"):
             self.host = self.host[:-1]
             
         self.default_model = default_model or settings.providers.ollama_model or "llama3"
+        self.timeout = timeout
 
     def _sync_post(self, path: str, payload: Dict[str, Any]) -> bytes:
         """Helper to run synchronous POST requests to Ollama."""
@@ -38,7 +42,7 @@ class OllamaProvider(LLMProvider):
             data=data, 
             headers={"Content-Type": "application/json"}
         )
-        with urllib.request.urlopen(req, timeout=30) as response:
+        with urllib.request.urlopen(req, timeout=self.timeout) as response:
             return response.read()
 
     async def chat(
@@ -55,7 +59,6 @@ class OllamaProvider(LLMProvider):
         model = kwargs.pop("model", self.default_model)
         openai_tools = format_openai_tools(tools)
         
-        # Build options dictionary
         options: Dict[str, Any] = {"temperature": temperature}
         if max_tokens is not None:
             options["num_predict"] = max_tokens
@@ -90,13 +93,12 @@ class OllamaProvider(LLMProvider):
 
         message = response_json.get("message", {})
         
-        # Map Ollama's tool call structure to the standard protocol format
         tool_calls = []
         raw_tool_calls = message.get("tool_calls", [])
-        for i, tc in enumerate(raw_tool_calls):
+        for tc in raw_tool_calls:
             func = tc.get("function", {})
             tool_calls.append({
-                "id": f"ollama_call_{i}",
+                "id": f"ollama_{uuid.uuid4().hex[:8]}",
                 "name": func.get("name"),
                 "arguments": func.get("arguments", {})
             })
@@ -117,10 +119,7 @@ class OllamaProvider(LLMProvider):
     ) -> AsyncIterator[Dict[str, Any]]:
         """
         Streams response from Ollama API.
-        Since HTTP streaming is more complex without external request libraries like httpx,
-        we run a standard HTTP reader chunk by chunk inside the executor.
         """
-        # For simplicity and robust stream parsing, we read line-by-line from urlopen.
         model = kwargs.pop("model", self.default_model)
         options: Dict[str, Any] = {"temperature": temperature}
         if max_tokens is not None:
@@ -146,7 +145,7 @@ class OllamaProvider(LLMProvider):
                 data=data, 
                 headers={"Content-Type": "application/json"}
             )
-            return urllib.request.urlopen(req, timeout=30)
+            return urllib.request.urlopen(req, timeout=self.timeout)
 
         try:
             response = await loop.run_in_executor(None, _get_stream)
@@ -157,7 +156,6 @@ class OllamaProvider(LLMProvider):
 
         try:
             while True:
-                # Read a line from HTTP response stream
                 line_bytes = await loop.run_in_executor(None, response.readline)
                 if not line_bytes:
                     break
@@ -166,7 +164,6 @@ class OllamaProvider(LLMProvider):
                     continue
                 data = json.loads(line)
                 
-                # Check for completion
                 if data.get("done", False):
                     break
                     
@@ -174,7 +171,8 @@ class OllamaProvider(LLMProvider):
                 yield {
                     "role": "assistant",
                     "content": message.get("content", ""),
-                    "tool_calls": []  # Tool calls delta streaming is generally not standard/simple in Ollama
+                    "tool_calls": []
                 }
         finally:
             response.close()
+

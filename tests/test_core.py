@@ -25,7 +25,7 @@ def test_settings_load(monkeypatch):
     overridden = load_settings()
     assert overridden.current_workspace == "custom-workspace"
     assert overridden.default_provider == "google"
-    assert overridden.providers.openai_api_key == "test-openai-key"
+    assert overridden.providers.get_key_str("openai_api_key") == "test-openai-key"
 
 
 @pytest.mark.asyncio

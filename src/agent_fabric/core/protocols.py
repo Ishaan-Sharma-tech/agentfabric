@@ -1,6 +1,8 @@
 from typing import Protocol, List, Dict, Any, Optional, AsyncIterator, runtime_checkable
 from agent_fabric.core.models import MemoryRecord
 
+__all__ = ["ToolProtocol", "LLMProvider", "MemoryBackend", "TeamStrategy"]
+
 
 @runtime_checkable
 class ToolProtocol(Protocol):
@@ -101,3 +103,19 @@ class MemoryBackend(Protocol):
     ) -> List[MemoryRecord]:
         """List stored memories with optional filtering."""
         ...
+
+
+@runtime_checkable
+class TeamStrategy(Protocol):
+    """Protocol defining how a multi-agent team strategy manages tasks and execution."""
+    async def execute(
+        self,
+        task: str,
+        agents: List[Any],
+        supervisor: Optional[Any] = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """Execute the strategy."""
+        ...
+
+
