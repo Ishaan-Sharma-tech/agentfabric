@@ -13,6 +13,7 @@ from agent_fabric.runtime.agent import Agent, validate_agent_name
 from agent_fabric.runtime.team import Team
 from agent_fabric.pipelines.dag import Pipeline
 from agent_fabric.pipelines.executor import PipelineExecutor
+from agent_fabric.scheduler.scheduler import Schedule, scheduler_engine
 
 logger = logging.getLogger("agent_fabric.server.app")
 
@@ -42,6 +43,16 @@ class TeamRunRequest(BaseModel):
 class PipelineRunRequest(BaseModel):
     pipeline: Dict[str, Any]
     inputs: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ScheduleCreateRequest(BaseModel):
+    name: str
+    trigger_type: str
+    trigger_config: Dict[str, Any]
+    target_type: str
+    target_name: str
+    inputs: Dict[str, Any] = Field(default_factory=dict)
+    enabled: bool = True
 
 
 class MemoryStoreRequest(BaseModel):
@@ -131,6 +142,40 @@ def create_app() -> FastAPI:
         except Exception as e:
             logger.error(f"Error running pipeline: {e}", exc_info=True)
             raise HTTPException(status_code=500, detail="Internal server error executing pipeline run.")
+
+    @app.post("/schedules")
+    async def create_schedule_endpoint(req: ScheduleCreateRequest):
+        """Register a new job schedule."""
+        try:
+            schedule_inst = Schedule(**req.model_dump())
+            created = scheduler_engine.create_schedule(schedule_inst)
+            return created.model_dump()
+        except Exception as e:
+            logger.error(f"Error creating schedule: {e}", exc_info=True)
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/schedules")
+    async def list_schedules_endpoint():
+        """List active job schedules."""
+        return [s.model_dump() for s in scheduler_engine.list_schedules()]
+
+    @app.put("/schedules/{id}/pause")
+    async def pause_schedule_endpoint(id: str):
+        """Pause an active schedule."""
+        scheduler_engine.pause_schedule(id)
+        return {"status": "paused", "id": id}
+
+    @app.delete("/schedules/{id}")
+    async def delete_schedule_endpoint(id: str):
+        """Delete a schedule."""
+        scheduler_engine.delete_schedule(id)
+        return {"status": "deleted", "id": id}
+
+    @app.get("/schedules/{id}/history")
+    async def get_schedule_history_endpoint(id: str):
+        """Retrieve execution history for a schedule."""
+        history = scheduler_engine.history_store.get_history(id)
+        return [h.model_dump() for h in history]
 
     @app.get("/agents/{name}/logs")
     async def get_agent_logs(name: str):

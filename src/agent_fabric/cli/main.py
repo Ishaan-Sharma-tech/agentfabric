@@ -15,6 +15,7 @@ from agent_fabric.runtime.agent import Agent, validate_agent_name
 from agent_fabric.runtime.team import Team
 from agent_fabric.pipelines.executor import PipelineExecutor
 from agent_fabric.pipelines.yaml import load_pipeline_from_yaml
+from agent_fabric.scheduler.scheduler import Schedule, scheduler_engine
 
 __all__ = ["app"]
 
@@ -23,6 +24,7 @@ app = typer.Typer(help="AgentFabric: The runtime for AI agents.")
 agent_app = typer.Typer(help="Manage and run AgentFabric agents.")
 team_app = typer.Typer(help="Manage and run multi-agent teams.")
 pipeline_app = typer.Typer(help="Manage and run workflow pipelines.")
+schedule_app = typer.Typer(help="Manage recurring and event-based schedules.")
 memory_app = typer.Typer(help="Query and inspect memory records.")
 workspace_app = typer.Typer(help="Manage isolated workspaces.")
 server_app = typer.Typer(help="Start and manage the API and WebSocket server.")
@@ -30,6 +32,7 @@ server_app = typer.Typer(help="Start and manage the API and WebSocket server.")
 app.add_typer(agent_app, name="agent")
 app.add_typer(team_app, name="team")
 app.add_typer(pipeline_app, name="pipeline")
+app.add_typer(schedule_app, name="schedule")
 app.add_typer(memory_app, name="memory")
 app.add_typer(workspace_app, name="workspace")
 app.add_typer(server_app, name="server")
@@ -170,6 +173,86 @@ def pipeline_run(
         ))
 
     asyncio.run(_async_run())
+
+
+# --- Schedule Subcommands ---
+@schedule_app.command(name="create")
+def schedule_create(
+    name: str = typer.Argument(..., help="Schedule identifier name."),
+    target_type: str = typer.Option("agent", "--target-type", "-t", help="Target workload type (agent, team, pipeline, tool)."),
+    target_name: str = typer.Option("assistant", "--target-name", "-n", help="Target workload name."),
+    interval: Optional[float] = typer.Option(None, "--interval", "-i", help="Interval trigger seconds."),
+    event_type: Optional[str] = typer.Option(None, "--event", "-e", help="Event trigger type.")
+):
+    """Create a new recurring interval or reactive event-based schedule."""
+    if interval is not None:
+        trig_type = "interval"
+        trig_cfg = {"seconds": interval}
+    elif event_type is not None:
+        trig_type = "event"
+        trig_cfg = {"event_type": event_type}
+    else:
+        trig_type = "interval"
+        trig_cfg = {"seconds": 60.0}
+        
+    s = Schedule(
+        name=name,
+        trigger_type=trig_type,
+        trigger_config=trig_cfg,
+        target_type=target_type,
+        target_name=target_name,
+        inputs={}
+    )
+    created = scheduler_engine.create_schedule(s)
+    console.print(f"[bold green]Created schedule '{created.name}' (ID: {created.id})[/bold green]")
+
+
+@schedule_app.command(name="list")
+def schedule_list():
+    """List active schedules in current workspace."""
+    schedules = scheduler_engine.list_schedules()
+    if not schedules:
+        console.print("[yellow]No active schedules found.[/yellow]")
+        return
+        
+    table = Table(title="Workspace Schedules")
+    table.add_column("ID", style="dim")
+    table.add_column("Name", style="bold green")
+    table.add_column("Trigger Type", style="cyan")
+    table.add_column("Target", style="magenta")
+    table.add_column("Enabled", style="yellow")
+    
+    for s in schedules:
+        table.add_row(s.id[:8], s.name, s.trigger_type, f"{s.target_type}:{s.target_name}", "Yes" if s.enabled else "No")
+        
+    console.print(table)
+
+
+@schedule_app.command(name="history")
+def schedule_history(
+    schedule_id: str = typer.Argument(..., help="Schedule ID or name.")
+):
+    """Retrieve execution history for a schedule."""
+    s = scheduler_engine.get_schedule(schedule_id)
+    sid = s.id if s else schedule_id
+    history = scheduler_engine.history_store.get_history(sid)
+    
+    if not history:
+        console.print(f"[yellow]No execution history found for schedule '{schedule_id}'.[/yellow]")
+        return
+        
+    table = Table(title=f"Schedule History ({schedule_id})")
+    table.add_column("Exec ID", style="dim")
+    table.add_column("Status", style="bold")
+    table.add_column("Trigger Time", style="cyan")
+    table.add_column("Output / Error", style="white")
+    
+    for h in history:
+        status_style = "green" if h.status == "completed" else "red"
+        out_str = h.error if h.error else str(h.output)
+        table.add_row(h.execution_id[:8], f"[{status_style}]{h.status}[/{status_style}]", str(h.trigger_time), out_str[:50])
+        
+    console.print(table)
 
 
 # --- Memory Subcommands ---
