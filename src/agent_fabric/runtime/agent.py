@@ -14,6 +14,10 @@ from agent_fabric.tools.registry import tool_registry
 from agent_fabric.tools.runtime import ToolExecutor
 from agent_fabric.providers.openai import OpenAIProvider
 from agent_fabric.providers.ollama import OllamaProvider
+from agent_fabric.providers.anthropic import AnthropicProvider
+from agent_fabric.providers.google import GoogleGeminiProvider
+from agent_fabric.providers.groq_provider import GroqProvider
+from agent_fabric.providers.lmstudio import LMStudioProvider
 from agent_fabric.observability.logger import setup_agent_logger
 
 logger = logging.getLogger("agent_fabric.runtime.agent")
@@ -24,28 +28,30 @@ AGENT_NAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$")
 
 
 def validate_agent_name(name: str) -> str:
-    """Validate that agent name is safe against path traversal."""
-    if not isinstance(name, str) or not AGENT_NAME_RE.match(name):
+    if not AGENT_NAME_RE.match(name):
         raise ValueError(
-            f"Invalid agent name: {name!r}. Must match pattern '^[a-zA-Z0-9][a-zA-Z0-9._-]{{0,63}}$'."
+            f"Invalid agent name '{name}'. Must be 1-64 alphanumeric characters, "
+            "dashes, underscores, or dots, and start with an alphanumeric character."
         )
     return name
 
 
 class AgentResult(BaseModel):
-    """Result returned by an Agent execution run."""
+    """Execution output from an Agent run."""
     text: str
     messages: List[Dict[str, Any]] = Field(default_factory=list)
+    tool_calls: List[Dict[str, Any]] = Field(default_factory=list)
+    raw_response: Optional[Any] = None
 
 
 class Agent:
     """
-    The Agent class handles the conversational execution loop, tool invocation,
-    conversational history, and automatic memory integration.
+    Core Agent class — managing LLM chat interactions, tool execution,
+    isolated execution history, and memory persistence.
     """
     def __init__(
         self,
-        name: str,
+        name: str = "assistant",
         model: Optional[str] = None,
         tools: Optional[List[Union[str, Any]]] = None,
         system_prompt: Optional[str] = None,
@@ -68,10 +74,19 @@ class Agent:
         # Resolve LLM Provider
         provider_name = provider or settings.default_provider
         if isinstance(provider_name, str):
-            if provider_name == "openai":
+            p_lower = provider_name.lower()
+            if p_lower == "openai":
                 self.provider = OpenAIProvider(default_model=model)
-            elif provider_name == "ollama":
+            elif p_lower == "ollama":
                 self.provider = OllamaProvider(default_model=model)
+            elif p_lower == "anthropic":
+                self.provider = AnthropicProvider(default_model=model)
+            elif p_lower in ("google", "gemini"):
+                self.provider = GoogleGeminiProvider(default_model=model)
+            elif p_lower == "groq":
+                self.provider = GroqProvider(default_model=model)
+            elif p_lower == "lmstudio":
+                self.provider = LMStudioProvider(default_model=model)
             else:
                 raise ValueError(f"Unsupported built-in provider: {provider_name}")
         else:

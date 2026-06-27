@@ -239,6 +239,26 @@ def create_app() -> FastAPI:
             logger.error(f"Error storing memory: {e}", exc_info=True)
             raise HTTPException(status_code=500, detail="Internal server error storing memory.")
 
+    @app.post("/memory/export")
+    async def export_memory_endpoint():
+        """Export all stored memory records for backup."""
+        try:
+            records = await memory_engine.export_memories()
+            return records
+        except Exception as e:
+            logger.error(f"Error exporting memories: {e}", exc_info=True)
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post("/memory/import")
+    async def import_memory_endpoint(records: List[Dict[str, Any]]):
+        """Import memory records from JSON payload."""
+        try:
+            imported_count = await memory_engine.import_memories(records)
+            return {"status": "imported", "count": imported_count}
+        except Exception as e:
+            logger.error(f"Error importing memories: {e}", exc_info=True)
+            raise HTTPException(status_code=500, detail=str(e))
+
     @app.get("/memory/search")
     async def search_memory(
         query: str = Query(..., description="Query terms to search"),

@@ -107,6 +107,20 @@ class MemoryEngine:
             except Exception as e:
                 logger.warning(f"Vector backend delete failed for record '{record_id}': {e}", exc_info=True)
 
+    async def export_memories(self) -> List[Dict[str, Any]]:
+        """Export all memory records as a list of dictionaries for backup."""
+        records = await self.list_records(limit=1000)
+        return [r.model_dump() for r in records]
+
+    async def import_memories(self, records_data: List[Dict[str, Any]]) -> int:
+        """Import memory records from a list of dictionaries."""
+        count = 0
+        for data in records_data:
+            rec = MemoryRecord(**data)
+            await self.sqlite_store.store(rec)
+            count += 1
+        return count
+
 
 # Global singleton facade
 memory_engine = MemoryEngine()
