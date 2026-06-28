@@ -7,6 +7,12 @@ logger = logging.getLogger("agent_fabric.providers.anthropic")
 
 __all__ = ["AnthropicProvider"]
 
+try:
+    import anthropic  # noqa
+    ANTHROPIC_AVAILABLE = True
+except ImportError:
+    ANTHROPIC_AVAILABLE = False
+
 
 class AnthropicProvider(LLMProvider):
     """
@@ -17,10 +23,9 @@ class AnthropicProvider(LLMProvider):
         api_key: Optional[str] = None, 
         default_model: Optional[str] = None
     ):
-        try:
-            import anthropic
-        except ImportError:
+        if not ANTHROPIC_AVAILABLE:
             raise ImportError("Anthropic SDK is not installed. Install with `pip install anthropic`.")
+        import anthropic
             
         key = api_key or (settings.providers.anthropic_api_key.get_secret_value() if hasattr(settings.providers, "anthropic_api_key") and settings.providers.anthropic_api_key else None)
         self.client = anthropic.AsyncAnthropic(api_key=key or "dummy_key")
