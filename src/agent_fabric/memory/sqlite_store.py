@@ -198,6 +198,10 @@ class SQLiteMemoryStore:
         """List memory records with optional filters."""
         return await asyncio.to_thread(self._list_all_sync, limit, filters)
 
+    async def list_records(self, limit: int = 100, filters: Optional[Dict[str, Any]] = None) -> List[MemoryRecord]:
+        """List memory records with optional filters (alias for list_all)."""
+        return await self.list_all(limit, filters)
+
     def _parse_iso(self, val: str) -> datetime:
         return datetime.fromisoformat(val.replace("Z", "+00:00"))
 

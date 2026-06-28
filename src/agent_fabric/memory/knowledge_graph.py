@@ -163,3 +163,40 @@ class KnowledgeGraph:
                         
         return None
 
+    def find_path(self, start_id: str, end_id: str, max_depth: int = 5) -> Optional[List[str]]:
+        """Alias for multi-hop path query traversal."""
+        return self.path(start_id, end_id, max_depth=max_depth)
+
+    def extract_subgraph(self, center_node_id: str, depth: int = 2) -> Dict[str, Any]:
+        """Extracts subgraph neighborhood around a center node up to N hops."""
+        nodes: Dict[str, Any] = {}
+        edges: List[Dict[str, Any]] = []
+        visited_nodes: Set[str] = {center_node_id}
+        queue: deque = deque([(center_node_id, 0)])
+
+        with get_db_conn() as conn:
+            center_node = self.get_node(center_node_id)
+            if center_node:
+                nodes[center_node_id] = center_node
+
+            while queue:
+                curr_id, curr_depth = queue.popleft()
+                if curr_depth >= depth:
+                    continue
+
+                for nbr in self._neighbors_with_conn(conn, curr_id):
+                    nbr_id = nbr["id"]
+                    edges.append({
+                        "source": curr_id if nbr["direction"] == "outgoing" else nbr_id,
+                        "target": nbr_id if nbr["direction"] == "outgoing" else curr_id,
+                        "relationship": nbr["relationship"]
+                    })
+                    if nbr_id not in visited_nodes:
+                        visited_nodes.add(nbr_id)
+                        node_obj = self.get_node(nbr_id)
+                        if node_obj:
+                            nodes[nbr_id] = node_obj
+                        queue.append((nbr_id, curr_depth + 1))
+
+        return {"nodes": list(nodes.values()), "edges": edges}
+
