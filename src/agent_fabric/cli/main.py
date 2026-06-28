@@ -555,7 +555,15 @@ def studio_start(
     uvicorn.run("agent_fabric.server.app:create_app", factory=True, host="127.0.0.1", port=port, log_level="info")
 
 
+@app.command(name="tui")
+def tui_start():
+    """Start interactive Terminal Dashboard (TUI)."""
+    from agent_fabric.cli.tui import run_tui
+    run_tui(duration_sec=2.0)
+
+
 # Entry Point
 if __name__ == "__main__":
     app()
+
 

@@ -257,6 +257,18 @@ agentfabric studio
 
 ---
 
+## ⚡ Why AgentFabric? Comparison vs Competitors
+
+| Feature | AgentFabric | LangChain | CrewAI | AutoGPT |
+|---|---|---|---|---|
+| **Primary Focus** | Agent Infrastructure & Runtime | Chain Prompting & Orchestration | Role-based Agent Teams | Autonomous Task Execution |
+| **Persistent Memory & Graph** | Built-in SQLite + FTS5 + Knowledge Graph | Requires External Vector DB | Basic Short/Long-Term Memory | Basic File/JSON Memory |
+| **BYOA & Framework Adapters** | LangGraph, CrewAI, OpenAI SDK, Custom | Self-contained | Self-contained | Self-contained |
+| **Model Context Protocol (MCP)** | Bidirectional (Server & Client) | Community wrappers | Limited | No |
+| **Desktop & Terminal Studio** | Tauri Desktop Studio + Rich TUI | No | No | Web UI |
+
+---
+
 ## 🔌 Ecosystem
 
 ### LLM Providers
