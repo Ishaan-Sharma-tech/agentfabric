@@ -8,6 +8,7 @@ from agent_fabric.providers.anthropic import AnthropicProvider as AnthropicProvi
 from agent_fabric.providers.google import GoogleGeminiProvider as GoogleGeminiProvider
 from agent_fabric.providers.groq_provider import GroqProvider as GroqProvider
 from agent_fabric.providers.lmstudio import LMStudioProvider as LMStudioProvider
+from agent_fabric.providers.openrouter import OpenRouterProvider as OpenRouterProvider
 
 __all__ = [
     "OpenAIProvider", 
@@ -16,5 +17,6 @@ __all__ = [
     "GoogleGeminiProvider", 
     "GroqProvider", 
     "LMStudioProvider", 
+    "OpenRouterProvider",
     "format_openai_tools"
 ]

@@ -18,6 +18,7 @@ from agent_fabric.providers.anthropic import AnthropicProvider
 from agent_fabric.providers.google import GoogleGeminiProvider
 from agent_fabric.providers.groq_provider import GroqProvider
 from agent_fabric.providers.lmstudio import LMStudioProvider
+from agent_fabric.providers.openrouter import OpenRouterProvider
 from agent_fabric.observability.logger import setup_agent_logger
 
 logger = logging.getLogger("agent_fabric.runtime.agent")
@@ -87,6 +88,8 @@ class Agent:
                 self.provider = GroqProvider(default_model=model)
             elif p_lower == "lmstudio":
                 self.provider = LMStudioProvider(default_model=model)
+            elif p_lower == "openrouter":
+                self.provider = OpenRouterProvider(default_model=model)
             else:
                 raise ValueError(f"Unsupported built-in provider: {provider_name}")
         else:
