@@ -17,6 +17,7 @@ from agent_fabric.pipelines.executor import PipelineExecutor
 from agent_fabric.pipelines.yaml import load_pipeline_from_yaml
 from agent_fabric.scheduler.scheduler import Schedule, scheduler_engine
 from agent_fabric.plugins.manager import plugin_manager
+from agent_fabric.registry import registry_catalog, install_package, update_packages, scaffold_plugin, PackageMetadata
 
 __all__ = ["app"]
 
@@ -27,6 +28,7 @@ team_app = typer.Typer(help="Manage and run multi-agent teams.")
 pipeline_app = typer.Typer(help="Manage and run workflow pipelines.")
 schedule_app = typer.Typer(help="Manage recurring and event-based schedules.")
 plugin_app = typer.Typer(help="Manage and inspect plugins.")
+registry_app = typer.Typer(help="Search, install, publish, and update packages.")
 memory_app = typer.Typer(help="Query and inspect memory records.")
 workspace_app = typer.Typer(help="Manage isolated workspaces.")
 server_app = typer.Typer(help="Start and manage the API and WebSocket server.")
@@ -36,6 +38,7 @@ app.add_typer(team_app, name="team")
 app.add_typer(pipeline_app, name="pipeline")
 app.add_typer(schedule_app, name="schedule")
 app.add_typer(plugin_app, name="plugin")
+app.add_typer(registry_app, name="registry")
 app.add_typer(memory_app, name="memory")
 app.add_typer(workspace_app, name="workspace")
 app.add_typer(server_app, name="server")
@@ -313,6 +316,77 @@ def plugin_disable(
     """Disable a plugin."""
     plugin_manager.disable_plugin(name)
     console.print(f"[bold yellow]Disabled plugin '{name}'.[/bold yellow]")
+
+
+# --- Registry Subcommands ---
+@registry_app.command(name="search")
+def registry_search_cmd(
+    query: str = typer.Argument("", help="Search query string."),
+    tag: Optional[str] = typer.Option(None, "--tag", "-t", help="Filter by tag.")
+):
+    """Search registered package catalog."""
+    pkgs = registry_catalog.search(query=query, tag=tag)
+    if not pkgs:
+        console.print("[yellow]No packages found matching criteria.[/yellow]")
+        return
+        
+    table = Table(title="AgentFabric Package Registry")
+    table.add_column("Package Name", style="bold green")
+    table.add_column("Version", style="dim")
+    table.add_column("Type", style="cyan")
+    table.add_column("Downloads", style="yellow")
+    table.add_column("Description", style="white")
+    
+    for p in pkgs:
+        table.add_row(p.name, p.version, p.type, str(p.downloads), p.description)
+        
+    console.print(table)
+
+
+@registry_app.command(name="install")
+def registry_install_cmd(
+    package_name: str = typer.Argument(..., help="Package name to install.")
+):
+    """Install a package from registry into active workspace."""
+    res = install_package(package_name)
+    if "Error" in res:
+        console.print(f"[red]{res}[/red]")
+    else:
+        console.print(f"[bold green]{res}[/bold green]")
+
+
+@registry_app.command(name="update")
+def registry_update_cmd():
+    """Update all installed packages in active workspace."""
+    res = update_packages()
+    console.print(f"[bold green]{res}[/bold green]")
+
+
+@registry_app.command(name="publish")
+def registry_publish_cmd(
+    name: str = typer.Argument(..., help="Package name to publish."),
+    description: str = typer.Option("", "--desc", "-d", help="Package description.")
+):
+    """Publish or update a package in the local registry catalog."""
+    pkg = PackageMetadata(name=name, description=description, author="Local Developer")
+    registry_catalog.register_package(pkg)
+    console.print(f"[bold green]Successfully published '{name}' to registry catalog.[/bold green]")
+
+
+@app.command(name="init")
+def init_cmd(
+    target_type: str = typer.Argument("plugin", help="Type to initialize (e.g. 'plugin')"),
+    name: str = typer.Argument(..., help="Name of the project to initialize")
+):
+    """Scaffold a new project or plugin structure."""
+    if target_type.lower() == "plugin":
+        res = scaffold_plugin(name)
+        if "Error" in res:
+            console.print(f"[red]{res}[/red]")
+        else:
+            console.print(f"[bold green]{res}[/bold green]")
+    else:
+        console.print(f"[red]Unsupported init target type: '{target_type}'. Supported: plugin[/red]")
 
 
 # --- Memory Subcommands ---

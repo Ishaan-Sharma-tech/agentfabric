@@ -15,6 +15,7 @@ from agent_fabric.pipelines.dag import Pipeline
 from agent_fabric.pipelines.executor import PipelineExecutor
 from agent_fabric.scheduler.scheduler import Schedule, scheduler_engine
 from agent_fabric.plugins.manager import plugin_manager
+from agent_fabric.registry.catalog import registry_catalog
 
 logger = logging.getLogger("agent_fabric.server.app")
 
@@ -194,6 +195,20 @@ def create_app() -> FastAPI:
         """Disable a registered plugin."""
         plugin_manager.disable_plugin(name)
         return {"status": "disabled", "name": name}
+
+    @app.get("/registry/search")
+    async def registry_search_endpoint(q: str = "", tag: Optional[str] = None):
+        """Search registered packages catalog."""
+        pkgs = registry_catalog.search(query=q, tag=tag)
+        return [p.model_dump() for p in pkgs]
+
+    @app.get("/registry/packages/{name}")
+    async def registry_package_endpoint(name: str):
+        """Get registry package details by name."""
+        pkg = registry_catalog.get_package(name)
+        if not pkg:
+            raise HTTPException(status_code=404, detail=f"Package '{name}' not found.")
+        return pkg.model_dump()
 
     @app.get("/agents/{name}/logs")
     async def get_agent_logs(name: str):
