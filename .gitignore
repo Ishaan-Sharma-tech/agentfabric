@@ -146,3 +146,6 @@ Thumbs.db
 
 # AgentFabric local run directory
 .agentfabric/
+*.sqlite
+*.sqlite3
+*.db
