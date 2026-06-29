@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field, ConfigDict, SecretStr
 
 logger = logging.getLogger("agent_fabric.config")
 
-__all__ = ["ProviderSettings", "AgentFabricSettings", "get_env_var", "load_settings", "ensure_agentfabric_structure", "settings"]
+__all__ = ["ProviderSettings", "AgentFabricSettings", "get_env_var", "load_settings", "save_settings", "ensure_agentfabric_structure", "settings"]
 
 # Constants
 DEFAULT_AGENTFABRIC_DIR = Path.home() / ".agentfabric"
@@ -170,6 +170,22 @@ def ensure_agentfabric_structure(settings_inst: AgentFabricSettings) -> None:
     (active_ws_dir / "logs").mkdir(parents=True, exist_ok=True)
 
 
+def save_settings(settings_inst: Optional[AgentFabricSettings] = None, config_path: Optional[Path] = None) -> None:
+    """Save active settings back to agentfabric.yaml."""
+    inst = settings_inst or settings
+    path = config_path or (inst.agentfabric_dir / "agentfabric.yaml")
+    inst.agentfabric_dir.mkdir(parents=True, exist_ok=True)
+    data = {
+        "current_workspace": inst.current_workspace,
+        "default_provider": inst.default_provider,
+        "memory_backend": inst.memory_backend,
+        "observability_enabled": inst.observability_enabled,
+    }
+    with open(path, "w", encoding="utf-8") as f:
+        yaml.dump(data, f)
+
+
 # Global settings instance
 settings = load_settings()
+
 

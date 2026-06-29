@@ -494,7 +494,7 @@ def workspace_list():
     
     current_ws = Workspace.current()
     for ws in workspaces:
-        active_str = "[bold green]✓[/bold green]" if ws.name == current_ws.name else ""
+        active_str = "[bold green][ACTIVE][/bold green]" if ws.name == current_ws.name else ""
         table.add_row(ws.name, active_str, str(ws.path))
         
     console.print(table)
@@ -528,6 +528,8 @@ def workspace_select(name: str = typer.Argument(..., help="Name of the workspace
         console.print(f"[bold red]Error:[/bold red] Workspace '{clean_name}' does not exist. Create it first using 'agentfabric workspace create {clean_name}'.")
         raise typer.Exit(1)
     settings.current_workspace = clean_name
+    from agent_fabric.core.config import save_settings
+    save_settings()
     console.print(f"[bold green]Switched active workspace context to '{clean_name}'.[/bold green]")
 
 
