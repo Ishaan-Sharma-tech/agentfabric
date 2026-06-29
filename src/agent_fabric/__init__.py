@@ -4,7 +4,7 @@ AgentFabric: The runtime for AI agents.
 import asyncio
 from typing import Any
 
-__version__ = "0.1.0"
+__version__ = "0.1.0b1"
 
 # Public SDK Facades
 from agent_fabric.tools.decorator import tool as tool
