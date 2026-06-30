@@ -4,6 +4,9 @@ Welcome to **AgentFabric** — the foundational runtime infrastructure for AI ag
 
 ---
 
+> [!NOTE]
+> Installing the `agentfabric-sdk` package automatically provides access to all three main products: the **Python SDK**, the **Terminal CLI (`agentfabric`)**, and the **Studio Backend Server**. All components are ready for beta testing.
+
 ## ⚡ 1. Python SDK (Developer Core)
 The primary interface for developers to build, orchestrate, and deploy production agents programmatically in Python.
 

@@ -53,6 +53,9 @@ AgentFabric is not another agent framework. It does not replace LangGraph, CrewA
 pip install agentfabric-sdk
 ```
 
+> [!NOTE]
+> The `agentfabric-sdk` package installs the **Python SDK**, the **Terminal CLI (`agentfabric`)**, and the **Studio Backend Server** all in one. All components are fully functional and ready for testing.
+
 ### Create Your First Agent
 
 ```python
