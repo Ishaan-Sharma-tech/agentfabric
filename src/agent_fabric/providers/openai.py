@@ -63,7 +63,7 @@ class OpenAIProvider(LLMProvider):
         if not OPENAI_AVAILABLE:
             raise ImportError(
                 "OpenAI SDK is not installed. Please install it using: "
-                "pip install agent-fabric[openai]"
+                "pip install agentfabric-sdk[openai]"
             )
             
         key = api_key or (settings.providers.openai_api_key.get_secret_value() if settings.providers.openai_api_key else None)

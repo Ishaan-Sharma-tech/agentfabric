@@ -10,7 +10,7 @@ resolution-markers = [
 ]
 
 [[package]]
-name = "agent-fabric"
+name = "agentfabric-sdk"
 version = "0.1.0b1"
 source = { editable = "." }
 dependencies = [

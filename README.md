@@ -50,7 +50,7 @@ AgentFabric is not another agent framework. It does not replace LangGraph, CrewA
 ### Installation
 
 ```bash
-pip install agent-fabric
+pip install agentfabric-sdk
 ```
 
 ### Create Your First Agent
@@ -277,10 +277,10 @@ AgentFabric is model-agnostic. Configure your preferred provider:
 
 | Provider | Package |
 |---|---|
-| OpenAI (GPT-4o, o3, o4-mini) | `agent-fabric-openai` |
-| Anthropic (Claude) | `agent-fabric-anthropic` |
-| Google (Gemini) | `agent-fabric-google` |
-| Ollama (Local models) | `agent-fabric-ollama` |
+| OpenAI (GPT-4o, o3, o4-mini) | `agentfabric-sdk[openai]` |
+| Anthropic (Claude) | `agentfabric-sdk[anthropic]` |
+| Google (Gemini) | `agentfabric-sdk[google]` |
+| Ollama (Local models) | Built-in |
 
 ### Plugins
 

@@ -1,5 +1,5 @@
 [project]
-name = "agent-fabric"
+name = "agentfabric-sdk"
 version = "0.1.0b1"
 description = "The runtime for AI agents."
 readme = "README.md"

@@ -19,7 +19,7 @@ except ImportError:
 class QdrantVectorStore:
     """
     Optional semantic memory backend using Qdrant Embedded.
-    Requires `pip install agent-fabric[vectors]`.
+    Requires `pip install agentfabric-sdk[vectors]`.
     """
     def __init__(
         self, 
@@ -31,7 +31,7 @@ class QdrantVectorStore:
         if not QDRANT_AVAILABLE:
             raise ImportError(
                 "Qdrant Client is not installed. Please install it using: "
-                "pip install agent-fabric[vectors]"
+                "pip install agentfabric-sdk[vectors]"
             )
             
         self.collection_name = collection_name
